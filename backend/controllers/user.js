@@ -4,6 +4,7 @@ let User = require('../models/user');
 let bcrypt = require('bcrypt-nodejs');
 let fs = require('fs');
 let path = require('path');
+let jwt = require('../services/jwt');
 
 
 function getUsers(req,res){
@@ -92,11 +93,69 @@ function saveUserImage(req,res){
         //console.log(req.files);
         let filePath = req.files.image.path;
         let fileSplit = filePath.split('\\');
-        
+        let fileName = fileSplit[2];
+
+        let extSplit = fileName.split('\.');
+        let extFile = extSplit[1];
+
+        if(extFile == 'png' || extFile == 'jpg' || extFile == 'jpeg'){
+            User.findByIdAndUpdate(userId,{image:fileName},(err,updatedUser)=>{
+                if(err){
+                    res.status(500).send({message:'There is an error on the server'});
+                } else {
+                    if(!updatedUser){
+                        res.status(404).send({message:'The user doesn´t exist'});
+                    } else {
+                        res.status(200).send({user:updatedUser});
+                    }
+                }
+            });
+        } else {
+            res.status(404).send({message:'The file extension is not valid'});
+        }
 
     } else {
         res.status(404).send({message:'Please upload a image'});
     }
+}
+
+function getUserImage(req,res){
+    let imageFile = req.params.imageFile;
+    let filePath = './uploads/users/' + imageFile;
+    fs.exists(filePath,(exist)=>{
+        (exist)? res.sendFile(path.resolve(filePath)) : res.status(200).send({message:'The image doesn´t exist'});
+    });
+}
+
+function userLogin(req,res){
+    let params = req.body;
+    let email = params.email;
+    let password = params.password;
+
+    User.findOne({email:email.toLowerCase()},(err,user)=>{
+        if(err){
+            res.status(500).send({message:'There is an error on the server'});
+        } else {
+            if(!user){
+                res.status(404).send({message:'The email doesn´t exist'});
+            } else {
+                bcrypt.compare(password,user.password,(err,check)=>{
+                    if(check){
+                        if(params.getHash){
+                            res.status(200).send({
+                                token:jwt.createToken(user)
+                            });
+                        } else {
+                            res.status(200).send({user});
+                        }
+                        
+                    } else {
+                        res.status(200).send({message:'The user or password are invalid'});
+                    }
+                });
+            }
+        }
+    });
 }
 
 module.exports = {
@@ -104,6 +163,8 @@ module.exports = {
     saveUser,
     updateUser,
     deleteUser,
-    saveUserImage
+    saveUserImage,
+    getUserImage,
+    userLogin
 }
 
