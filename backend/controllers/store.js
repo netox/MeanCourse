@@ -2,8 +2,18 @@
 
 let Store = require('../models/store');
 
-function test(req,res){
-    res.status(200).send({message:'Message from the store controller'});
+function getStores(req,res){
+    Store.find((err,stores)=>{
+        if(err){
+            res.status(500).send({message:'There is an error on the server'});
+        } else {
+            if(!stores){
+                res.status(404).send({message:'The stores collection is empty'});
+            } else {
+                res.status(200).send({stores});
+            }
+        }
+    });
 }
 
 function saveStore(req,res){
@@ -30,7 +40,43 @@ function saveStore(req,res){
     });
 }
 
+function updateStore(req,res){
+    let storeId = req.params.id;
+    let params = req.body;
+
+    Store.findByIdAndUpdate(storeId,params,(err,updatedStore)=>{
+        if(err){
+            res.status(500).send({message:'There is an error on the server'});
+        } else {
+            if(!updateStore){
+                res.status(404).send({message:'The store doesn´t exist'});
+            } else {
+                res.status(200).send({store:updatedStore});
+            }
+        }
+    }); 
+}
+
+function deleteStore(req,res){
+    let storeId = req.params.id;
+
+    Store.findByIdAndRemove(storeId,(err,deletedStore)=>{
+        if(err){
+            res.status(500).send({message:'there is an error on the server'});
+        } else {
+            if(!deleteStore){
+                res.status(404).send({message:'The store doesn´t exist'});
+            } else {
+                res.status(200).send({store:deletedStore});
+            }
+        }
+    });
+}
+
+
 module.exports = {
-    test,
-    saveStore
+    getStores,
+    saveStore,
+    updateStore,
+    deleteStore
 }

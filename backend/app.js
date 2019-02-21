@@ -12,11 +12,13 @@ app.use(bodyParser.json());
 let UserRoutes = require('./routes/user');
 let ProductRoutes = require('./routes/product');
 let StoreRoutes = require('./routes/store');
+let EmployeeRoutes = require('./routes/employee');
 //headers configurations
 
 app.use('/system',UserRoutes);
 app.use('/system',ProductRoutes);
 app.use('/system',StoreRoutes);
+app.use('/system',EmployeeRoutes);
 
 module.exports = app;
 
